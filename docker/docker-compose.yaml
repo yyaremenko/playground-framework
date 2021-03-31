@@ -1,0 +1,30 @@
+version: '3'
+
+services:
+    mysql:
+        image: mysql:8.0
+        container_name: fmw.mysql
+        volumes:
+            - ./mysql.data:/var/lib/mysql
+        environment:
+            - MYSQL_ALLOW_EMPTY_PASSWORD=yes
+
+    php-fpm:
+        container_name: fmw.php-fpm
+        depends_on:
+            - mysql
+        volumes:
+            - ../:/var/www
+        build:
+            context: ./php-fpm
+
+    nginx:
+        image: nginx:1.19
+        container_name: fmw.nginx
+        depends_on:
+            - php-fpm
+        ports:
+            - 80:80
+        volumes:
+            - ./nginx.conf:/etc/nginx/conf.d/default.conf
+            - ../pub:/var/www/pub
