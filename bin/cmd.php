@@ -1,0 +1,69 @@
+<?php
+
+namespace Bin\cmd;
+
+if (!function_exists('Bin\cmd\loadNonAbstractClassesFromDir')) {
+    function loadNonAbstractClassesFromDir(string $dir, string $classNamespace): array
+    {
+        $classes = [];
+
+        $files = glob($dir . '*.php');
+        foreach ($files as $path) {
+            preg_match('/(\w*)\.php/', $path, $matches);
+            $currentCommandClass = $matches[1];
+
+            if (str_contains($currentCommandClass, 'Abstract')) {
+                continue;
+            }
+
+            require_once $path;
+            $classes[] = $classNamespace . $currentCommandClass;
+        }
+
+        return $classes;
+    }
+}
+
+$commandName = $argv[1] ??= null;
+$commandsClassesAvailable = loadNonAbstractClassesFromDir(__DIR__.'/../Command/', 'OOP\Command\\');
+
+$printAvailableCommands = function() use ($commandsClassesAvailable) {
+    echo PHP_EOL . PHP_EOL;
+    echo 'The following commands are available:' . PHP_EOL;
+    foreach ($commandsClassesAvailable as $commandClass) {
+        echo sprintf(
+            '%s%s%s',
+                $commandClass::getName(),
+                "\t\t",
+                $commandClass::getDescription(),
+            ) . PHP_EOL;
+    }
+};
+
+if (!$commandName) {
+    echo 'ERROR! You must provide command.' . PHP_EOL;
+    $printAvailableCommands();
+    exit();
+}
+
+$commandClass = null;
+foreach ($commandsClassesAvailable as $currentClass) {
+    if ($commandName !== $currentClass::getName()) {
+        continue;
+    }
+
+    $commandClass = $currentClass;
+    break;
+}
+
+if (!$commandClass) {
+    echo sprintf('ERROR! Command "%s" not found', $commandName);
+    $printAvailableCommands();
+    exit();
+}
+
+/** @var \Sys\Cmd\AbstractCommand $command */
+$command = new $commandClass();
+$command->run();
+
+exit();
