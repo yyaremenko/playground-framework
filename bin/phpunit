@@ -1,0 +1,11 @@
+#!/usr/bin/env php
+<?php
+
+$vendorDir = __DIR__ . '/../vendor';
+$actualPhpUnit = $vendorDir .'/bin/phpunit';
+if (!file_exists($actualPhpUnit)) {
+    $eMsg = sprintf('PhpUnit not found in %s, make sure it is installed.', $actualPhpUnit);
+    exit($eMsg);
+}
+
+require_once $actualPhpUnit;
